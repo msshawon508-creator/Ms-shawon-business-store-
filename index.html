@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Ms Shawon - Admin Panel</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;font-family:Arial,sans-serif;background:#f5f6fa;color:#222}
+header{background:#e91e63;color:white;padding:18px}
+header h2{margin:0}
+.container{padding:15px;max-width:1100px;margin:auto}
+.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
+.box{background:white;padding:16px;border-radius:16px;margin-bottom:15px;box-shadow:0 3px 12px #0001}
+.stat{font-size:25px;font-weight:bold;color:#e91e63}
+input,select,textarea{width:100%;padding:12px;margin:6px 0 12px;border:1px solid #ddd;border-radius:10px}
+button{border:0;padding:11px 15px;border-radius:10px;cursor:pointer}
+.primary{background:#e91e63;color:white}
+.green{background:#16a085;color:white}
+.red{background:#e74c3c;color:white}
+.gray{background:#ddd}
+.product{display:flex;gap:12px;align-items:center;border-bottom:1px solid #eee;padding:12px 0}
+.product img{width:70px;height:70px;object-fit:cover;border-radius:10px}
+.product-info{flex:1}
+.hidden{display:none}
+nav{display:flex;gap:7px;overflow:auto;margin-bottom:15px}
+nav button{white-space:nowrap;background:white}
+nav button.active{background:#e91e63;color:white}
+.review{background:#f7f7f7;padding:12px;border-radius:10px;margin:8px 0}
+@media(max-width:650px){
+.grid{grid-template-columns:1fr}
+.product{align-items:flex-start}
+}
+</style>
+</head>
+
+<body>
+
+<header>
+<h2>🛍️ Ms Shawon Business Store</h2>
+<p>Admin Dashboard</p>
+</header>
+
+<div class="container">
+
+<nav>
+<button class="active" onclick="showTab('dashboard',this)">📊 Dashboard</button>
+<button onclick="showTab('products',this)">🛍️ Products</button>
+<button onclick="showTab('orders',this)">📦 Orders</button>
+<button onclick="showTab('reviews',this)">⭐ Reviews</button>
+<button onclick="showTab('settings',this)">⚙️ Settings</button>
+</nav>
+
+<!-- DASHBOARD -->
+<div id="dashboard">
+
+<div class="grid">
+
+<div class="box">
+<div>🛍️ Total Products</div>
+<div class="stat" id="totalProducts">0</div>
+</div>
+
+<div class="box">
+<div>📦 Total Orders</div>
+<div class="stat" id="totalOrders">0</div>
+</div>
+
+<div class="box">
+<div>⭐ Reviews</div>
+<div class="stat" id="totalReviews">0</div>
+</div>
+
+<div class="box">
+<div>💰 Sales</div>
+<div class="stat">৳<span id="sales">0</span></div>
+</div>
+
+</div>
+
+<div class="box">
+<h3>⚡ Quick Actions</h3>
+<button class="primary" onclick="showTab('products')">
+➕ Add New Product
+</button>
+</div>
+
+</div>
+
+
+<!-- PRODUCTS -->
+<div id="products" class="hidden">
+
+<div class="box">
+
+<h2>➕ Add Product</h2>
+
+<input id="pName" placeholder="Product Name">
+
+<input id="pPrice" type="number" placeholder="Offer Price">
+
+<input id="pOld" type="number" placeholder="Regular Price">
+
+<select id="pCategory">
+<option value="threepiece">Three Piece</option>
+<option value="saree">Saree</option>
+<option value="dress">Dress</option>
+<option value="new">New Arrival</option>
+</select>
+
+<input id="pStock" type="number" placeholder="Stock Quantity">
+
+<input id="pImage" placeholder="Product Image URL">
+
+<textarea id="pDescription" placeholder="Product Description"></textarea>
+
+<button class="primary" onclick="addProduct()">
+➕ Add Product
+</button>
+
+</div>
+
+<div class="box">
+<h2>🛍️ Product List</h2>
+<div id="productList"></div>
+</div>
+
+</div>
+
+
+<!-- ORDERS -->
+<div id="orders" class="hidden">
+
+<div class="box">
+<h2>📦 Orders</h2>
+<div id="orderList">
+<p>এখনও কোনো Order নেই।</p>
+</div>
+</div>
+
+</div>
+
+
+<!-- REVIEWS -->
+<div id="reviews" class="hidden">
+
+<div class="box">
+<h2>⭐ Customer Reviews</h2>
+<div id="reviewList"></div>
+</div>
+
+</div>
+
+
+<!-- SETTINGS -->
+<div id="settings" class="hidden">
+
+<div class="box">
+
+<h2>⚙️ Store Settings</h2>
+
+<label>Store Name</label>
+<input id="storeName" value="Ms Shawon Business Store">
+
+<label>WhatsApp Number</label>
+<input id="whatsapp" placeholder="8801XXXXXXXXX">
+
+<label>Delivery Charge</label>
+<input id="delivery" type="number" value="0">
+
+<button class="primary" onclick="saveSettings()">
+💾 Save Settings
+</button>
+
+</div>
+
+<div class="box">
+
+<h3>🔧 Data Management</h3>
+
+<button class="red" onclick="clearProducts()">
+🗑️ Delete All Products
+</button>
+
+</div>
+
+</div>
+
+</div>
+
+
+<script>
+
+let products=JSON.parse(localStorage.getItem("products")||"[]");
+let orders=JSON.parse(localStorage.getItem("orders")||"[]");
+let reviews=JSON.parse(localStorage.getItem("reviews")||"[]");
+
+function showTab(id,btn){
+
+document.querySelectorAll(".container>div").forEach(x=>{
+if(["dashboard","products","orders","reviews","settings"].includes(x.id))
+x.classList.add("hidden");
+});
+
+document.getElementById(id).classList.remove("hidden");
+
+document.querySelectorAll("nav button").forEach(x=>x.classList.remove("active"));
+
+if(btn)btn.classList.add("active");
+
+refresh();
+
+}
+
+
+function addProduct(){
+
+let name=document.getElementById("pName").value;
+let price=Number(document.getElementById("pPrice").value);
+let old=Number(document.getElementById("pOld").value);
+let category=document.getElementById("pCategory").value;
+let stock=Number(document.getElementById("pStock").value);
+let image=document.getElementById("pImage").value;
+let description=document.getElementById("pDescription").value;
+
+if(!name||!price||!image){
+
+alert("Product Name, Price এবং Image দিন");
+return;
+
+}
+
+let product={
+
+id:Date.now(),
+name,
+price,
+old,
+category,
+stock,
+image,
+description,
+rating:5
+
+};
+
+products.push(product);
+
+localStorage.setItem("products",JSON.stringify(products));
+
+document.getElementById("pName").value="";
+document.getElementById("pPrice").value="";
+document.getElementById("pOld").value="";
+document.getElementById("pStock").value="";
+document.getElementById("pImage").value="";
+document.getElementById("pDescription").value="";
+
+alert("✅ Product Added!");
+
+refresh();
+
+}
+
+
+function showProducts(){
+
+let box=document.getElementById("productList");
+
+if(!products.length){
+
+box.innerHTML="<p>কোনো Product নেই।</p>";
+return;
+
+}
+
+box.innerHTML=products.map((p,i)=>`
+
+<div class="product">
+
+<img src="${p.image}">
+
+<div class="product-info">
+
+<b>${p.name}</b>
+
+<div>💰 ৳${p.price}</div>
+
+<div>📦 Stock: ${p.stock}</div>
+
+</div>
+
+<button class="red" onclick="deleteProduct(${i})">
+Delete
+</button>
+
+</div>
+
+`).join("");
+
+}
+
+
+function deleteProduct(i){
+
+if(confirm("এই Product Delete করবেন?")){
+
+products.splice(i,1);
+
+localStorage.setItem(
+"products",
+JSON.stringify(products)
+);
+
+refresh();
+
+}
+
+}
+
+
+function showReviews(){
+
+let box=document.getElementById("reviewList");
+
+if(!reviews.length){
+
+box.innerHTML="<p>এখনও কোনো Review নেই।</p>";
+return;
+
+}
+
+box.innerHTML=reviews.map((r,i)=>`
+
+<div class="review">
+
+<b>${r.name}</b>
+
+<div>${"⭐".repeat(r.rating)}</div>
+
+<p>${r.text}</p>
+
+<button class="red" onclick="deleteReview(${i})">
+Delete
+</button>
+
+</div>
+
+`).join("");
+
+}
+
+
+function deleteReview(i){
+
+reviews.splice(i,1);
+
+localStorage.setItem(
+"reviews",
+JSON.stringify(reviews)
+);
+
+refresh();
+
+}
+
+
+function showOrders(){
+
+let box=document.getElementById("orderList");
+
+if(!orders.length){
+
+box.innerHTML="<p>এখনও কোনো Order নেই।</p>";
+return;
+
+}
+
+box.innerHTML=orders.map(o=>`
+
+<div class="box">
+
+<b>👤 ${o.name}</b>
+
+<p>📱 ${o.phone}</p>
+
+<p>📍 ${o.address}</p>
+
+<p>💰 ৳${o.total}</p>
+
+<button class="green">
+✅ Confirm
+</button>
+
+<button class="red">
+❌ Cancel
+</button>
+
+</div>
+
+`).join("");
+
+}
+
+
+function saveSettings(){
+
+let settings={
+
+storeName:
+document.getElementById("storeName").value,
+
+whatsapp:
+document.getElementById("whatsapp").value,
+
+delivery:
+document.getElementById("delivery").value
+
+};
+
+localStorage.setItem(
+"settings",
+JSON.stringify(settings)
+);
+
+alert("✅ Settings Saved!");
+
+}
+
+
+function clearProducts(){
+
+if(confirm("সব Product Delete করবেন?")){
+
+products=[];
+
+localStorage.setItem(
+"products",
+JSON.stringify(products)
+);
+
+refresh();
+
+}
+
+}
+
+
+function refresh(){
+
+document.getElementById("totalProducts").innerText=
+products.length;
+
+document.getElementById("totalOrders").innerText=
+orders.length;
+
+document.getElementById("totalReviews").innerText=
+reviews.length;
+
+let sales=orders.reduce(
+(a,o)=>a+Number(o.total||0),0
+);
+
+document.getElementById("sales").innerText=sales;
+
+showProducts();
+showReviews();
+showOrders();
+
+}
+
+
+let saved=JSON.parse(
+localStorage.getItem("settings")||"{}"
+);
+
+if(saved.whatsapp)
+document.getElementById("whatsapp").value=saved.whatsapp;
+
+if(saved.storeName)
+document.getElementById("storeName").value=saved.storeName;
+
+if(saved.delivery)
+document.getElementById("delivery").value=saved.delivery;
+
+refresh();
+
+</script>
+
+</body>
+  </html>
